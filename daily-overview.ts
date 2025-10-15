@@ -65,6 +65,7 @@ export const computeDailyOverview = (entries: any[]): DailyOverview => {
 const buildDailyOverview = (container: HTMLElement, overview: DailyOverview): void => {
 	container.empty();
 	container.addClass('easy-tracker-card');
+    container.setAttr('id', 'easy-tracker-daily-overview');
 	container.createEl('div', { cls: 'easy-tracker-card-title', text: "Today's overview" });
 
 	const metrics: Array<{ label: string; value: string; hint?: string; modifier?: string }> = [
@@ -106,7 +107,7 @@ export const renderDailyOverview = (el: HTMLElement, overview: DailyOverview): v
 };
 
 export const updateDailyOverview = (el: HTMLElement, overview: DailyOverview): void => {
-	const container = el.querySelector('.easy-tracker-daily-overview');
+	const container = el.querySelector('#easy-tracker-daily-overview');
 	if (container instanceof HTMLElement) {
 		buildDailyOverview(container, overview);
 	} else {

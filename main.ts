@@ -154,9 +154,9 @@ export default class MyPlugin extends Plugin {
 					'```easy-tracker-daily-overview', '```',
 					'```year-calendar-heatmap', '```',
 					'```buttons',
-					'  Little | 1',
-					'  Enough | 2',
-					'  More | 3',
+					'  Just a bit | 1',
+					'  Got it done | 2',
+					'  Did extra | 3',
 					'```',
 					''
 				].join('\n'));
