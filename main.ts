@@ -131,6 +131,7 @@ export default class MyPlugin extends Plugin {
 				view: "year",
 				year: new Date().getFullYear(),
 				legend: false,
+				language: this.locale,
 				...options,
 			});
 
