@@ -6,7 +6,7 @@ import { renderDailyOverview, computeDailyOverview, updateDailyOverview } from '
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 	private heatmaps: CalendarHeatmap[] = [];
-	private overviewBlocks: HTMLElement[] = []; // Track overview blocks for updates
+	private overviewBlocks: HTMLElement[] = [];
 
 	// Get the active Markdown view or notify the user
 	private getActiveMarkdownView(): MarkdownView | null {
@@ -81,9 +81,11 @@ export default class MyPlugin extends Plugin {
 		this.registerMarkdownCodeBlockProcessor('year-calendar-heatmap', (source, el, _ctx) => {
 			const data = parseEntries(this.getActiveContent());
 			const options = this.parseHeatmapOptions(source);
-			const container = el.createDiv({ cls: 'calendar-heatmap-container' });
+			const container = el.createDiv({ cls: 'easy-tracker-year-calendar-heatmap-container' });
+			container.createEl('div', { cls: 'easy-tracker-heatmap-container__title', text: "Activity History" });
+			const heatmapElement = container.createDiv({ cls: 'easy-tracker-year-calendar-heatmap' });
 
-			const heatmap = new CalendarHeatmap(container, data, {
+			const heatmap = new CalendarHeatmap(heatmapElement, data, {
 				weekStart: this.settings.weekStart,
 				view: "year",
 				year: new Date().getFullYear(),
@@ -147,9 +149,7 @@ export default class MyPlugin extends Plugin {
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
 					'```easy-tracker-daily-overview', '```',
-					'',
 					'```year-calendar-heatmap', '```',
-					'',
 					'```buttons',
 					'  Little | 1',
 					'  Enough | 2',
@@ -167,9 +167,7 @@ export default class MyPlugin extends Plugin {
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
 					'```easy-tracker-daily-overview', '```',
-					'',
 					'```year-calendar-heatmap', '```',
-					'',
 					'```buttons',
 					'  Check in | 1',
 					'```',

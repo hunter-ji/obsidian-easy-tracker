@@ -36,7 +36,7 @@
 
 .easy-tracker-button-group:has(.btn:hover) .btn:not(:hover),
 .easy-tracker-button-group:has(.btn:focus-visible) .btn:not(:focus-visible) {
-    border-left: none;
+    border-left: 1px solid transparent;
 }
 
 .easy-tracker-button-group .btn.primary,
@@ -128,4 +128,22 @@
 		padding: 10px;
 		min-height: 88px;
 	}
+}
+
+.easy-tracker-year-calendar-heatmap-container {
+    padding: 16px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.easy-tracker-heatmap-container__title {
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--text-normal);
 }
