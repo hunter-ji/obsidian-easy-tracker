@@ -2,15 +2,6 @@ import { App, ButtonComponent, Editor, MarkdownView, Notice, Plugin, PluginSetti
 import CalendarHeatmap, { CalendarHeatmapOptions } from 'calendar-heatmap';
 import { hasTodayEntry, insertTodayEntry, parseEntries } from './utils';
 
-// Plugin settings: weekStart (0 = Sunday, 1 = Monday)
-interface MyPluginSettings {
-	weekStart: 0 | 1;
-}
-
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	weekStart: 1,
-};
-
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 
@@ -185,7 +176,15 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-// Settings UI
+// Plugin settings: weekStart (0 = Sunday, 1 = Monday)
+interface MyPluginSettings {
+	weekStart: 0 | 1;
+}
+
+const DEFAULT_SETTINGS: MyPluginSettings = {
+	weekStart: 1,
+};
+
 class EasyTrackerSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
 
