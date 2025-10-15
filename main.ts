@@ -120,6 +120,7 @@ export default class MyPlugin extends Plugin {
 				return;
 			}
 
+			container.createEl('div', { cls: 'easy-tracker-card-title', text: "How did you do today?" });
 			const wrap = container.createDiv({ cls: "easy-tracker-button-group" });
 			const lines = source.split("\n").map(s => s.trim()).filter(Boolean);
 
