@@ -127,4 +127,16 @@
     font-size: 20px;
     color: var(--text-muted);
     font-weight: 500;
+    user-select: none;
+}
+
+.easy-tracker-my-goal {
+    padding: 12px;
+	border-radius: 10px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+    font-size: 16px;
+    color: var(--text-muted);
+    font-weight: 500;
+    user-select: none;
 }

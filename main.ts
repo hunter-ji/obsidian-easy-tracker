@@ -85,8 +85,15 @@ export default class MyPlugin extends Plugin {
 		// Load settings (includes migration from legacy weakStart)
 		await this.loadSettings();
 
+		this.registerMarkdownCodeBlockProcessor('easy-tracker-my-goal', (source, el, _ctx) => {
+			const container = el.createDiv({ cls: "easy-tracker-card" });
+			container.setAttr('id', 'easy-tracker-my-goal');
+			container.createEl('div', { cls: 'easy-tracker-card-title', text: "My Goal" });
+			container.createEl('div', { cls: 'easy-tracker-my-goal', text: source.trim() || "Define your goal here!"});
+		});
+
 		// Render a yearly calendar heatmap from entries in the current note
-		this.registerMarkdownCodeBlockProcessor('year-calendar-heatmap', (source, el, _ctx) => {
+		this.registerMarkdownCodeBlockProcessor('easy-tracker-year-calendar-heatmap', (source, el, _ctx) => {
 			const data = parseEntries(this.getActiveContent());
 			const options = this.parseHeatmapOptions(source);
 			const container = el.createDiv({ cls: 'easy-tracker-card' });
@@ -111,16 +118,16 @@ export default class MyPlugin extends Plugin {
 		//  Enough | 2
 		//  More   | 3
 		// ```
-		this.registerMarkdownCodeBlockProcessor("buttons", (source, el) => {
+		this.registerMarkdownCodeBlockProcessor("easy-tracker-buttons", (source, el) => {
 			const container = el.createDiv({ cls: "easy-tracker-card" });
 			container.setAttr('id', 'easy-tracker-buttons');
+			container.createEl('div', { cls: 'easy-tracker-card-title', text: "How did you do today?" });
 
 			if (this.isTodayCheckedIn()) {
 				container.createEl('div', { cls: 'easy-tracker-card-message', text: 'Another day done, you’re making progress! 🎉' });
 				return;
 			}
 
-			container.createEl('div', { cls: 'easy-tracker-card-title', text: "How did you do today?" });
 			const wrap = container.createDiv({ cls: "easy-tracker-button-group" });
 			const lines = source.split("\n").map(s => s.trim()).filter(Boolean);
 
@@ -155,7 +162,7 @@ export default class MyPlugin extends Plugin {
 			name: 'Insert calendar heatmap',
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
-					'```year-calendar-heatmap',
+					'```easy-tracker-year-calendar-heatmap',
 					'```',
 					'',
 				].join('\n'));
@@ -169,12 +176,13 @@ export default class MyPlugin extends Plugin {
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
 					'```easy-tracker-daily-overview', '```',
-					'```year-calendar-heatmap', '```',
-					'```buttons',
+					'```easy-tracker-year-calendar-heatmap', '```',
+					'```easy-tracker-buttons',
 					'  Just a bit | 1',
 					'  Got it done | 2',
 					'  Did extra | 3',
 					'```',
+					'```easy-tracker-my-goal', 'Define your goal here!', '```',
 					''
 				].join('\n'));
 			},
@@ -187,10 +195,11 @@ export default class MyPlugin extends Plugin {
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
 					'```easy-tracker-daily-overview', '```',
-					'```year-calendar-heatmap', '```',
-					'```buttons',
+					'```easy-tracker-year-calendar-heatmap', '```',
+					'```easy-tracker-buttons',
 					'  Check in | 1',
 					'```',
+					'```easy-tracker-my-goal', 'Define your goal here!', '```',
 					''
 				].join('\n'));
 			},
@@ -201,6 +210,14 @@ export default class MyPlugin extends Plugin {
 			name: 'Insert Daily Overview',
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection(['```easy-tracker-daily-overview', '```', ''].join('\n'));
+			},
+		});
+
+		this.addCommand({
+			id: 'insert-easy-tracker-my-goal',
+			name: 'Insert My Goal',
+			editorCallback: (editor: Editor, _view: MarkdownView) => {
+				editor.replaceSelection(['```easy-tracker-easy-tracker-my-goal', 'Define your goal here!', '```', ''].join('\n'));
 			},
 		});
 
