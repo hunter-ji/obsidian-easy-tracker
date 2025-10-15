@@ -5,6 +5,7 @@ import { renderDailyOverview, computeDailyOverview } from './daily-overview';
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
+	private heatmaps: CalendarHeatmap[] = [];
 
 	// Get the active Markdown view or notify the user
 	private getActiveMarkdownView(): MarkdownView | null {
@@ -39,6 +40,10 @@ export default class MyPlugin extends Plugin {
 			return;
 		}
 		insertTodayEntry(editor, value);
+
+		// update heatmap if present
+		const data = parseEntries(this.getActiveContent());
+		this.heatmaps.forEach(heatmap => heatmap.replaceData(data));
 	}
 
 	// Parse JSON options for the heatmap processor with fallback
@@ -61,12 +66,15 @@ export default class MyPlugin extends Plugin {
 			const options = this.parseHeatmapOptions(source);
 			const container = el.createDiv({ cls: 'calendar-heatmap-container' });
 
-			new CalendarHeatmap(container, data, {
+			const heatmap = new CalendarHeatmap(container, data, {
 				weekStart: this.settings.weekStart,
+				view: "year",
 				year: new Date().getFullYear(),
 				legend: false,
 				...options,
 			});
+
+			this.heatmaps.push(heatmap);
 		});
 
 		// Render a group of buttons that insert today's entry with a value
@@ -98,6 +106,7 @@ export default class MyPlugin extends Plugin {
 			const overview = computeDailyOverview(entries);
 			renderDailyOverview(el, overview);
 		});
+
 		// Insert a bare heatmap block
 		this.addCommand({
 			id: 'insert-calendar-heatmap',
@@ -105,9 +114,6 @@ export default class MyPlugin extends Plugin {
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
 					'```year-calendar-heatmap',
-					'{',
-					'  "view": "year"',
-					'}',
 					'```',
 					'',
 				].join('\n'));
@@ -120,13 +126,9 @@ export default class MyPlugin extends Plugin {
 			name: 'Insert Positive Check-in Component',
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
-					'```easy-tracker-daily-overview',
-					'```',
-					'```year-calendar-heatmap',
-					'{',
-					'  "view": "year"',
-					'}',
-					'```',
+					'```easy-tracker-daily-overview', '```',
+					'',
+					'```year-calendar-heatmap', '```',
 					'',
 					'```buttons',
 					'  Little | 1',
@@ -144,13 +146,9 @@ export default class MyPlugin extends Plugin {
 			name: 'Insert Normal Check-in Component',
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
-					'```easy-tracker-daily-overview',
-					'```',
-					'```year-calendar-heatmap',
-					'{',
-					'  "view": "year"',
-					'}',
-					'```',
+					'```easy-tracker-daily-overview', '```',
+					'',
+					'```year-calendar-heatmap', '```',
 					'',
 					'```buttons',
 					'  Check in | 1',
