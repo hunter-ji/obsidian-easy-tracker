@@ -1,8 +1,56 @@
-/*
+.easy-tracker-button-group {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    padding: 6px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    overflow: hidden;
+    border-radius: 12px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    user-select: none;
+}
+.easy-tracker-button-group .btn {
+    flex: 1 1 0;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15px;
+    line-height: 1.2;
+    padding: 12px 16px;
+    min-height: 44px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-normal);
+    cursor: pointer;
+    user-select: none;
+    transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.easy-tracker-button-group .btn + .btn {
+    border-left: 1px solid var(--background-modifier-border-hover);
+}
+.easy-tracker-button-group .btn:hover { background: var(--interactive-hover); border-radius: 12px; }
+.easy-tracker-button-group .btn:active { background: var(--background-modifier-hover); border-radius: 12px; }
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.easy-tracker-button-group:has(.btn:hover) .btn:not(:hover),
+.easy-tracker-button-group:has(.btn:focus-visible) .btn:not(:focus-visible) {
+    border-left: none;
+}
 
-If your plugin does not need CSS, delete this file.
+.easy-tracker-button-group .btn.primary,
+.easy-tracker-button-group .btn.is-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
 
-*/
+.easy-tracker-button-group .btn.primary + .btn,
+.easy-tracker-button-group .btn.is-active + .btn {
+    border-left-color: color-mix(in oklab, var(--interactive-accent) 60%, transparent);
+}
+
+@media (max-width: 480px) {
+    .easy-tracker-button-group { padding: 4px; border-radius: 10px; }
+    .easy-tracker-button-group .btn { padding: 14px 12px; font-size: 16px; }
+}

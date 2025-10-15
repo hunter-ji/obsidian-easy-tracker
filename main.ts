@@ -1,7 +1,6 @@
 import { App, ButtonComponent, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import CalendarHeatmap, { CalendarHeatmapOptions } from 'calendar-heatmap';
 import { hasTodayEntry, insertTodayEntry, parseEntries } from './utils';
-import { buttonGroupStyles } from './styles';
 
 // Plugin settings: weekStart (0 = Sunday, 1 = Monday)
 interface MyPluginSettings {
@@ -14,7 +13,6 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
-	private styleEl: HTMLStyleElement | null = null;
 
 	// Get the active Markdown view or notify the user
 	private getActiveMarkdownView(): MarkdownView | null {
@@ -65,12 +63,6 @@ export default class MyPlugin extends Plugin {
 		// Load settings (includes migration from legacy weakStart)
 		await this.loadSettings();
 
-		// Inject minimal styles (auto-removed on unload)
-		this.styleEl = document.createElement("style");
-		this.styleEl.textContent = buttonGroupStyles;
-		document.head.appendChild(this.styleEl);
-		this.register(() => this.styleEl?.remove());
-
 		// Render a yearly calendar heatmap from entries in the current note
 		this.registerMarkdownCodeBlockProcessor('year-calendar-heatmap', (source, el, _ctx) => {
 			const data = parseEntries(this.getActiveContent());
@@ -93,7 +85,7 @@ export default class MyPlugin extends Plugin {
 		//  More   | 3
 		// ```
 		this.registerMarkdownCodeBlockProcessor("buttons", (source, el) => {
-			const wrap = el.createDiv({ cls: "btn-group" });
+			const wrap = el.createDiv({ cls: "easy-tracker-button-group" });
 			const lines = source.split("\n").map(s => s.trim()).filter(Boolean);
 
 			for (const [index, line] of lines.entries()) {
