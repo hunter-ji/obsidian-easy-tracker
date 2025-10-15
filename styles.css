@@ -120,3 +120,11 @@
 	color: var(--text-normal);
     user-select: none;
 }
+
+.easy-tracker-card-message {
+    padding-top: 16px;
+    padding-bottom: 16px;
+    font-size: 20px;
+    color: var(--text-muted);
+    font-weight: 500;
+}

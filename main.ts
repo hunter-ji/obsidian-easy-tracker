@@ -24,6 +24,14 @@ export default class MyPlugin extends Plugin {
 		return view ? (view.editor.getValue() || '') : '';
 	}
 
+	private isTodayCheckedIn(): boolean {
+		const view = this.getActiveMarkdownView();
+		if (!view) return false;
+
+		const content = view.editor.getValue() || '';
+		return hasTodayEntry(content);
+	}
+
 	// Safely insert today's entry with a value (prevents duplicates)
 	private insertEntry(value: number): void {
 		const view = this.getActiveMarkdownView();
@@ -105,7 +113,12 @@ export default class MyPlugin extends Plugin {
 		// ```
 		this.registerMarkdownCodeBlockProcessor("buttons", (source, el) => {
 			const container = el.createDiv({ cls: "easy-tracker-card" });
-			container.createEl('div', { cls: 'easy-tracker-card-title', text: "How did you do today?" });
+			container.setAttr('id', 'easy-tracker-buttons');
+
+			if (this.isTodayCheckedIn()) {
+				container.createEl('div', { cls: 'easy-tracker-card-message', text: 'Another day done, you’re making progress! 🎉' });
+				return;
+			}
 
 			const wrap = container.createDiv({ cls: "easy-tracker-button-group" });
 			const lines = source.split("\n").map(s => s.trim()).filter(Boolean);
@@ -119,6 +132,9 @@ export default class MyPlugin extends Plugin {
 					const n = Number(val);
 					const valueToInsert = Number.isFinite(n) ? n : index + 1; // use provided number, fallback to index
 					this.insertEntry(valueToInsert);
+
+					wrap.setAttribute('style', 'display: none;');
+					container.createEl('div', { cls: 'easy-tracker-card-message', text: 'Another day done, you’re making progress! 🎉' });
 				});
 			}
 		});
