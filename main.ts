@@ -1,11 +1,12 @@
 import { App, ButtonComponent, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import CalendarHeatmap, { CalendarHeatmapOptions } from 'calendar-heatmap';
 import { hasTodayEntry, insertTodayEntry, parseEntries } from './utils';
-import { renderDailyOverview, computeDailyOverview } from './daily-overview';
+import { renderDailyOverview, computeDailyOverview, updateDailyOverview } from './daily-overview';
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 	private heatmaps: CalendarHeatmap[] = [];
+	private overviewBlocks: HTMLElement[] = []; // Track overview blocks for updates
 
 	// Get the active Markdown view or notify the user
 	private getActiveMarkdownView(): MarkdownView | null {
@@ -41,9 +42,9 @@ export default class MyPlugin extends Plugin {
 		}
 		insertTodayEntry(editor, value);
 
-		// update heatmap if present
-		const data = parseEntries(this.getActiveContent());
-		this.heatmaps.forEach(heatmap => heatmap.replaceData(data));
+		// update
+		this.updateHeatmaps();
+		this.updateOverviews();
 	}
 
 	// Parse JSON options for the heatmap processor with fallback
@@ -53,6 +54,22 @@ export default class MyPlugin extends Plugin {
 		} catch {
 			console.warn('calendar-heatmap: unable to parse options JSON, using defaults');
 			return {};
+		}
+	}
+
+	private updateHeatmaps(): void {
+		const data = parseEntries(this.getActiveContent());
+		this.heatmaps.forEach(heatmap => heatmap.replaceData(data));
+	}
+
+	private updateOverviews(): void {
+		if (!this.overviewBlocks.length) return;
+
+		const entries = parseEntries(this.getActiveContent());
+		const overview = computeDailyOverview(entries);
+
+		for (const block of this.overviewBlocks) {
+			updateDailyOverview(block, overview);
 		}
 	}
 
@@ -105,6 +122,9 @@ export default class MyPlugin extends Plugin {
 			const entries = parseEntries(this.getActiveContent());
 			const overview = computeDailyOverview(entries);
 			renderDailyOverview(el, overview);
+
+			// Track this block for future updates
+			this.overviewBlocks.push(el);
 		});
 
 		// Insert a bare heatmap block

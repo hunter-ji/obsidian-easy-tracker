@@ -1,4 +1,3 @@
-
 // Daily overview interface
 export interface DailyOverview {
     hasEntries: boolean;
@@ -63,42 +62,54 @@ export const computeDailyOverview = (entries: any[]): DailyOverview => {
     return { hasEntries, hasToday, streak, lastMissing };
 }
 
+const buildDailyOverview = (container: HTMLElement, overview: DailyOverview): void => {
+	container.empty();
+	container.addClass('easy-tracker-daily-overview');
+	container.createEl('div', { cls: 'easy-tracker-daily-overview__title', text: "Today's overview" });
+
+	const metrics: Array<{ label: string; value: string; hint?: string; modifier?: string }> = [
+		{
+			label: "Today's status",
+			value: overview.hasToday ? 'Checked in' : 'Not checked in',
+			hint: overview.hasToday ? 'Keep the pace' : 'Remember to check in',
+			modifier: overview.hasToday ? 'easy-tracker-daily-overview__value--positive' : 'easy-tracker-daily-overview__value--warning',
+		},
+		{
+			label: 'Streak',
+			value: `${overview.hasEntries ? overview.streak : 0} days`,
+			hint: overview.hasEntries && overview.streak > 0 ? 'Keep it going' : 'Waiting to start',
+		},
+		{
+			label: 'Most recent gap',
+			value: overview.hasEntries ? overview.lastMissing ?? 'No gaps' : 'No data yet',
+			hint: overview.lastMissing ? 'Review this day' : 'Looking steady',
+		},
+	];
+
+	const grid = container.createDiv({ cls: 'easy-tracker-daily-overview__grid' });
+	for (const metric of metrics) {
+		const card = grid.createDiv({ cls: 'easy-tracker-daily-overview__item' });
+		card.createEl('div', { cls: 'easy-tracker-daily-overview__label', text: metric.label });
+
+		const valueEl = card.createEl('div', { cls: 'easy-tracker-daily-overview__value', text: metric.value });
+		if (metric.modifier) valueEl.addClass(metric.modifier);
+
+		if (metric.hint) {
+			card.createEl('div', { cls: 'easy-tracker-daily-overview__hint', text: metric.hint });
+		}
+	}
+};
+
 export const renderDailyOverview = (el: HTMLElement, overview: DailyOverview): void => {
-    const container = el.createDiv({ cls: 'easy-tracker-daily-overview' });
-    container.createEl('div', { cls: 'easy-tracker-daily-overview__title', text: '今日概览' });
+	const container = el.createDiv();
+	buildDailyOverview(container, overview);
+};
 
-    const metrics: Array<{ label: string; value: string; hint?: string; modifier?: string }> = [
-        {
-            label: '今日状态',
-            value: overview.hasToday ? '已打卡' : '未打卡',
-            hint: overview.hasToday ? '保持节奏' : '记得打卡',
-            modifier: overview.hasToday ? 'easy-tracker-daily-overview__value--positive' : 'easy-tracker-daily-overview__value--warning',
-        },
-        {
-            label: '连续打卡',
-            value: `${overview.hasEntries ? overview.streak : 0} 天`,
-            hint: overview.hasEntries && overview.streak > 0 ? '继续累计' : '等待开始',
-        },
-        {
-            label: '最近空缺',
-            value: overview.hasEntries ? overview.lastMissing ?? '无空缺' : '暂无数据',
-            hint: overview.lastMissing ? '关注这一天' : '表现稳定',
-        },
-    ];
-
-    const grid = container.createDiv({ cls: 'easy-tracker-daily-overview__grid' });
-
-    for (const metric of metrics) {
-        const card = grid.createDiv({ cls: 'easy-tracker-daily-overview__item' });
-        card.createEl('div', { cls: 'easy-tracker-daily-overview__label', text: metric.label });
-
-        const valueEl = card.createEl('div', { cls: 'easy-tracker-daily-overview__value', text: metric.value });
-        if (metric.modifier) {
-            valueEl.addClass(metric.modifier);
-        }
-
-        if (metric.hint) {
-            card.createEl('div', { cls: 'easy-tracker-daily-overview__hint', text: metric.hint });
-        }
-    }
-}
+export const updateDailyOverview = (el: HTMLElement, overview: DailyOverview): void => {
+	const container = el.querySelector('.easy-tracker-daily-overview');
+	if (container instanceof HTMLElement) {
+		buildDailyOverview(container, overview);
+	} else {
+		renderDailyOverview(el, overview);
+	}
+};
