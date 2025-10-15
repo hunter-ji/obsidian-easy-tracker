@@ -121,15 +121,7 @@
     user-select: none;
 }
 
-.easy-tracker-card-message {
-    padding-top: 16px;
-    padding-bottom: 16px;
-    font-size: 20px;
-    color: var(--text-muted);
-    font-weight: 500;
-    user-select: none;
-}
-
+.easy-tracker-card-message,
 .easy-tracker-my-goal {
     padding: 12px;
 	border-radius: 10px;

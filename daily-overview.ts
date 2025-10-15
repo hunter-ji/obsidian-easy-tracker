@@ -1,3 +1,5 @@
+import { Translator } from './locales';
+
 // Daily overview interface
 export interface DailyOverview {
     hasEntries: boolean;
@@ -62,32 +64,32 @@ export const computeDailyOverview = (entries: any[]): DailyOverview => {
     return { hasEntries, hasToday, streak, lastMissing };
 }
 
-const buildDailyOverview = (container: HTMLElement, overview: DailyOverview): void => {
+const buildDailyOverview = (container: HTMLElement, overview: DailyOverview, t: Translator): void => {
 	container.empty();
 	container.addClass('easy-tracker-card');
     container.setAttr('id', 'easy-tracker-daily-overview');
-	container.createEl('div', { cls: 'easy-tracker-card-title', text: "Today's overview" });
+    container.createEl('div', { cls: 'easy-tracker-card-title', text: t('overview.title') });
 
 	const metrics: Array<{ label: string; value: string; hint?: string; modifier?: string }> = [
 		{
-			label: "Today's status",
-			value: overview.hasToday ? 'Checked in' : 'Missed',
-			hint: overview.hasToday ? 'Keep the pace' : 'Remember to check in',
+            label: t('overview.statusLabel'),
+            value: overview.hasToday ? t('overview.statusValue.checkedIn') : t('overview.statusValue.missed'),
+            hint: overview.hasToday ? t('overview.statusHint.checkedIn') : t('overview.statusHint.missed'),
 			modifier: overview.hasToday ? 'easy-tracker-daily-overview__value--positive' : 'easy-tracker-daily-overview__value--warning',
 		},
 		{
-			label: 'Streak',
-			value: `${overview.hasEntries ? overview.streak : 0} days`,
-			hint: overview.hasEntries && overview.streak > 0 ? 'Keep it going' : 'Waiting to start',
+            label: t('overview.streakLabel'),
+            value: t('overview.streakValue', { count: String(overview.hasEntries ? overview.streak : 0) }),
+            hint: overview.hasEntries && overview.streak > 0 ? t('overview.streakHint.active') : t('overview.streakHint.inactive'),
 		},
 		{
-			label: 'Most recent gap',
-			value: overview.hasEntries ? overview.lastMissing ?? 'No gaps' : 'No data yet',
-			hint: overview.lastMissing ? 'Review this day' : 'Looking steady',
+            label: t('overview.gapLabel'),
+            value: overview.hasEntries ? overview.lastMissing ?? t('overview.gapValue.none') : t('overview.noData'),
+            hint: overview.lastMissing ? t('overview.gapHint.present') : t('overview.gapHint.none'),
 		},
 	];
 
-	const grid = container.createDiv({ cls: 'easy-tracker-daily-overview__grid' });
+    const grid = container.createDiv({ cls: 'easy-tracker-daily-overview__grid' });
 	for (const metric of metrics) {
 		const card = grid.createDiv({ cls: 'easy-tracker-daily-overview__item' });
 		card.createEl('div', { cls: 'easy-tracker-daily-overview__label', text: metric.label });
@@ -101,16 +103,16 @@ const buildDailyOverview = (container: HTMLElement, overview: DailyOverview): vo
 	}
 };
 
-export const renderDailyOverview = (el: HTMLElement, overview: DailyOverview): void => {
-	const container = el.createDiv();
-	buildDailyOverview(container, overview);
+export const renderDailyOverview = (el: HTMLElement, overview: DailyOverview, t: Translator): void => {
+    const container = el.createDiv();
+    buildDailyOverview(container, overview, t);
 };
 
-export const updateDailyOverview = (el: HTMLElement, overview: DailyOverview): void => {
-	const container = el.querySelector('#easy-tracker-daily-overview');
-	if (container instanceof HTMLElement) {
-		buildDailyOverview(container, overview);
-	} else {
-		renderDailyOverview(el, overview);
-	}
+export const updateDailyOverview = (el: HTMLElement, overview: DailyOverview, t: Translator): void => {
+    const container = el.querySelector('#easy-tracker-daily-overview');
+    if (container instanceof HTMLElement) {
+        buildDailyOverview(container, overview, t);
+    } else {
+        renderDailyOverview(el, overview, t);
+    }
 };
