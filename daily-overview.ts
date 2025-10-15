@@ -64,13 +64,13 @@ export const computeDailyOverview = (entries: any[]): DailyOverview => {
 
 const buildDailyOverview = (container: HTMLElement, overview: DailyOverview): void => {
 	container.empty();
-	container.addClass('easy-tracker-daily-overview');
-	container.createEl('div', { cls: 'easy-tracker-daily-overview__title', text: "Today's overview" });
+	container.addClass('easy-tracker-card');
+	container.createEl('div', { cls: 'easy-tracker-card-title', text: "Today's overview" });
 
 	const metrics: Array<{ label: string; value: string; hint?: string; modifier?: string }> = [
 		{
 			label: "Today's status",
-			value: overview.hasToday ? 'Checked in' : 'Not checked in',
+			value: overview.hasToday ? 'Checked in' : 'Missed',
 			hint: overview.hasToday ? 'Keep the pace' : 'Remember to check in',
 			modifier: overview.hasToday ? 'easy-tracker-daily-overview__value--positive' : 'easy-tracker-daily-overview__value--warning',
 		},

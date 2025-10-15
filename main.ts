@@ -81,8 +81,8 @@ export default class MyPlugin extends Plugin {
 		this.registerMarkdownCodeBlockProcessor('year-calendar-heatmap', (source, el, _ctx) => {
 			const data = parseEntries(this.getActiveContent());
 			const options = this.parseHeatmapOptions(source);
-			const container = el.createDiv({ cls: 'easy-tracker-year-calendar-heatmap-container' });
-			container.createEl('div', { cls: 'easy-tracker-heatmap-container__title', text: "Activity History" });
+			const container = el.createDiv({ cls: 'easy-tracker-card' });
+			container.createEl('div', { cls: 'easy-tracker-card-title', text: "Activity History" });
 			const heatmapElement = container.createDiv({ cls: 'easy-tracker-year-calendar-heatmap' });
 
 			const heatmap = new CalendarHeatmap(heatmapElement, data, {
@@ -104,7 +104,10 @@ export default class MyPlugin extends Plugin {
 		//  More   | 3
 		// ```
 		this.registerMarkdownCodeBlockProcessor("buttons", (source, el) => {
-			const wrap = el.createDiv({ cls: "easy-tracker-button-group" });
+			const container = el.createDiv({ cls: "easy-tracker-card" });
+			container.createEl('div', { cls: 'easy-tracker-card-title', text: "How did you do today?" });
+
+			const wrap = container.createDiv({ cls: "easy-tracker-button-group" });
 			const lines = source.split("\n").map(s => s.trim()).filter(Boolean);
 
 			for (const [index, line] of lines.entries()) {
@@ -144,8 +147,8 @@ export default class MyPlugin extends Plugin {
 
 		// Insert a heatmap + three preset buttons (1..3)
 		this.addCommand({
-			id: 'insert-positive-check-in-component',
-			name: 'Insert Positive Check-in Component',
+			id: 'insert-check-in-component',
+			name: 'Insert Check-in Component',
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
 					'```easy-tracker-daily-overview', '```',
@@ -162,8 +165,8 @@ export default class MyPlugin extends Plugin {
 
 		// Insert a heatmap + single check-in button
 		this.addCommand({
-			id: 'insert-normal-check-in-component',
-			name: 'Insert Normal Check-in Component',
+			id: 'insert-single-check-in-component',
+			name: 'Insert Single Check-in Component',
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
 					'```easy-tracker-daily-overview', '```',
