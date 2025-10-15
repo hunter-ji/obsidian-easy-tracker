@@ -1,6 +1,7 @@
 import { App, ButtonComponent, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import CalendarHeatmap, { CalendarHeatmapOptions } from 'calendar-heatmap';
 import { hasTodayEntry, insertTodayEntry, parseEntries } from './utils';
+import { renderDailyOverview, computeDailyOverview } from './daily-overview';
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
@@ -92,6 +93,11 @@ export default class MyPlugin extends Plugin {
 			}
 		});
 
+		this.registerMarkdownCodeBlockProcessor("easy-tracker-daily-overview", (_source, el) => {
+			const entries = parseEntries(this.getActiveContent());
+			const overview = computeDailyOverview(entries);
+			renderDailyOverview(el, overview);
+		});
 		// Insert a bare heatmap block
 		this.addCommand({
 			id: 'insert-calendar-heatmap',
@@ -114,6 +120,8 @@ export default class MyPlugin extends Plugin {
 			name: 'Insert Positive Check-in Component',
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
+					'```easy-tracker-daily-overview',
+					'```',
 					'```year-calendar-heatmap',
 					'{',
 					'  "view": "year"',
@@ -136,6 +144,8 @@ export default class MyPlugin extends Plugin {
 			name: 'Insert Normal Check-in Component',
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection([
+					'```easy-tracker-daily-overview',
+					'```',
 					'```year-calendar-heatmap',
 					'{',
 					'  "view": "year"',
@@ -147,6 +157,14 @@ export default class MyPlugin extends Plugin {
 					'```',
 					''
 				].join('\n'));
+			},
+		});
+
+		this.addCommand({
+			id: 'insert-easy-tracker-daily-overview',
+			name: 'Insert Daily Overview',
+			editorCallback: (editor: Editor, _view: MarkdownView) => {
+				editor.replaceSelection(['```easy-tracker-daily-overview', '```', ''].join('\n'));
 			},
 		});
 
