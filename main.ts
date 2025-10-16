@@ -1,5 +1,5 @@
 import { App, ButtonComponent, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import CalendarHeatmap, { CalendarHeatmapOptions } from 'calendar-heatmap';
+import CalendarHeatmap, { CalendarHeatmapOptions } from './calendar-heatmap/index.js';
 import { hasTodayEntry, insertTodayEntry, parseEntries } from './utils';
 import { computeDailyOverview, renderDailyOverview, updateDailyOverview } from './daily-overview';
 import { createTranslator, isLanguageSetting, LanguageSetting, LocaleCode, LocaleKey, resolveLocale, Translator } from './locales';
