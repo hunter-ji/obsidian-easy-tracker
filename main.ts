@@ -3,7 +3,6 @@ import CalendarHeatmap, { CalendarHeatmapOptions } from './calendar-heatmap/inde
 import { hasTodayEntry, insertTodayEntry, parseEntries } from './utils';
 import { computeDailyOverview, renderDailyOverview, updateDailyOverview } from './daily-overview';
 import { createTranslator, isLanguageSetting, LanguageSetting, LocaleCode, LocaleKey, resolveLocale, Translator } from './locales';
-import { BlobOptions } from 'buffer';
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
@@ -11,6 +10,7 @@ export default class MyPlugin extends Plugin {
 	private overviewBlocks: HTMLElement[] = [];
 	private locale: LocaleCode = 'en';
 	private translator: Translator = createTranslator('en');
+	private lastCheckInTime: number = 0;
 
 	public t(key: LocaleKey, vars?: Record<string, string | number>): string {
 		return this.translator(key, vars);
@@ -60,6 +60,13 @@ export default class MyPlugin extends Plugin {
 
 	// Safely insert today's entry with a value (prevents duplicates)
 	private insertEntry(value: number): boolean {
+		const now = Date.now();
+		if (now - this.lastCheckInTime < 1000) {
+			new Notice(this.t('notice.checkInTooFast'));
+			return false;
+		}
+		this.lastCheckInTime = now;
+
 		const view = this.getActiveMarkdownView();
 		if (!view) return false;
 
