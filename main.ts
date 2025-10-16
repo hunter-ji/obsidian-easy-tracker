@@ -3,6 +3,7 @@ import CalendarHeatmap, { CalendarHeatmapOptions } from './calendar-heatmap/inde
 import { hasTodayEntry, insertTodayEntry, parseEntries } from './utils';
 import { computeDailyOverview, renderDailyOverview, updateDailyOverview } from './daily-overview';
 import { createTranslator, isLanguageSetting, LanguageSetting, LocaleCode, LocaleKey, resolveLocale, Translator } from './locales';
+import { BlobOptions } from 'buffer';
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
@@ -58,26 +59,33 @@ export default class MyPlugin extends Plugin {
 	}
 
 	// Safely insert today's entry with a value (prevents duplicates)
-	private insertEntry(value: number): void {
+	private insertEntry(value: number): boolean {
 		const view = this.getActiveMarkdownView();
-		if (!view) return;
+		if (!view) return false;
+
+		if (view.getMode() !== 'source') {
+			new Notice(this.t('notice.onlyCheckInInEditMode'));
+			return false;
+		}
 
 		const content = view.editor.getValue() || '';
 		if (hasTodayEntry(content)) {
 			new Notice(this.t('notice.alreadyCheckedIn'));
-			return;
+			return false;
 		}
 
 		const editor = view.editor;
 		if (!editor) {
 			new Notice(this.t('notice.editorUnavailable'));
-			return;
+			return false;
 		}
 		insertTodayEntry(editor, value);
 
 		// update
 		this.updateHeatmaps();
 		this.updateOverviews();
+
+		return true;
 	}
 
 	// Parse JSON options for the heatmap processor with fallback
@@ -166,10 +174,12 @@ export default class MyPlugin extends Plugin {
 				btn.onClick(() => {
 					const n = Number(val);
 					const valueToInsert = Number.isFinite(n) ? n : index + 1; // use provided number, fallback to index
-					this.insertEntry(valueToInsert);
+					const checkInResult = this.insertEntry(valueToInsert);
 
-					wrap.setAttribute('style', 'display: none;');
-					container.createEl('div', { cls: 'easy-tracker-card-message', text: this.t('card.checkInCongrats') });
+					if (checkInResult) {
+						wrap.setAttribute('style', 'display: none;');
+						container.createEl('div', { cls: 'easy-tracker-card-message', text: this.t('card.checkInCongrats') });
+					}
 				});
 			}
 		});
