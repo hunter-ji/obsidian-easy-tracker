@@ -40,7 +40,10 @@ export const computeDailyOverview = (entries: any[]): DailyOverview => {
 
     let streak = 0;
     if (hasEntries) {
-        const cursor = new Date();
+        let cursor = new Date();
+        if (!hasToday) {
+            cursor.setDate(cursor.getDate() - 1);
+        }
         while (dates.has(normalizeDateKey(cursor))) {
             streak += 1;
             cursor.setDate(cursor.getDate() - 1);
