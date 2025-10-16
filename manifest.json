@@ -3,9 +3,8 @@
 	"name": "Easy Tracker",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "A simple time tracker for Obsidian.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "An Obsidian plugin for ultra-simple goal and habit tracking in any note.",
+	"author": "Hunter Ji",
+	"authorUrl": "https://hunterji.com",
 	"isDesktopOnly": false
 }
