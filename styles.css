@@ -5,13 +5,14 @@
 	gap: 14px;
 }
 .easy-tracker-button-group {
-    display: flex;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 12px;
     user-select: none;
 }
 .easy-tracker-button-group .btn {
-    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
     display: inline-flex;
     justify-content: center;
     align-items: center;
@@ -32,8 +33,17 @@
 }
 
 @media (max-width: 480px) {
-    .easy-tracker-button-group { padding: 4px; border-radius: 10px; }
-    .easy-tracker-button-group .btn { padding: 14px 12px; font-size: 16px; }
+    .easy-tracker-button-group { 
+        padding: 4px; 
+        border-radius: 10px; 
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .easy-tracker-button-group .btn { 
+        padding: 14px 12px; 
+        font-size: 16px; 
+        width: 100%;
+    }
 }
 
 .easy-tracker-daily-overview__title {
