@@ -1,7 +1,7 @@
 {
 	"name": "easy-tracker",
-	"version": "1.0.0",
-	"description": "A simple time tracker for Obsidian.",
+	"version": "1.0.1",
+	"description": "Instantly track goals and habits. Simple, beautiful, and configuration-free.",
 	"author": "HunterJi",
 	"authorUrl": "https://hunterji.com",
 	"main": "main.js",

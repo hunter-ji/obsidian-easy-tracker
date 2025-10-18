@@ -1,9 +1,9 @@
 {
 	"id": "easy-tracker",
 	"name": "Easy Tracker",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "An Obsidian plugin for ultra-simple goal and habit tracking in any note.",
+	"description": "Instantly track goals and habits. Simple, beautiful, and configuration-free.",
 	"author": "Hunter Ji",
 	"authorUrl": "https://hunterji.com",
 	"isDesktopOnly": false
