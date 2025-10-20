@@ -164,11 +164,11 @@ Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particula
 **main.ts** (minimal, lifecycle only):
 ```ts
 import { Plugin } from "obsidian";
-import { MySettings, DEFAULT_SETTINGS } from "./settings";
+import { EasyTrackerPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { registerCommands } from "./commands";
 
-export default class MyPlugin extends Plugin {
-  settings: MySettings;
+export default class EasyTrackerPlugin extends Plugin {
+  settings: EasyTrackerPluginSettings;
 
   async onload() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -179,12 +179,12 @@ export default class MyPlugin extends Plugin {
 
 **settings.ts**:
 ```ts
-export interface MySettings {
+export interface EasyTrackerPluginSettings {
   enabled: boolean;
   apiKey: string;
 }
 
-export const DEFAULT_SETTINGS: MySettings = {
+export const DEFAULT_SETTINGS: EasyTrackerPluginSettings = {
   enabled: true,
   apiKey: "",
 };

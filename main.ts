@@ -1,11 +1,11 @@
-import { App, ButtonComponent, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, ButtonComponent, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, getLanguage } from 'obsidian';
 import CalendarHeatmap, { CalendarHeatmapOptions } from './calendar-heatmap/index.js';
 import { hasTodayEntry, insertTodayEntry, parseEntries } from './utils';
 import { computeDailyOverview, renderDailyOverview, updateDailyOverview } from './daily-overview';
 import { createTranslator, isLanguageSetting, LanguageSetting, LocaleCode, LocaleKey, resolveLocale, Translator } from './locales';
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class EasyTrackerPlugin extends Plugin {
+	settings: EasyTrackerPluginSettings;
 	private heatmaps: CalendarHeatmap[] = [];
 	private overviewBlocks: HTMLElement[] = [];
 	private locale: LocaleCode = 'en';
@@ -16,9 +16,8 @@ export default class MyPlugin extends Plugin {
 		return this.translator(key, vars);
 	}
 
-	private getSystemLocale(): string | undefined {
-		const raw = (this.app.vault as any)?.getConfig?.('locale');
-		return typeof raw === 'string' ? raw : undefined;
+	private getSystemLocale(): string {
+		return getLanguage();
 	}
 
 	public refreshLocale(): void {
@@ -273,13 +272,13 @@ export default class MyPlugin extends Plugin {
 
 	// Load settings and migrate legacy weakStart -> weekStart
 	async loadSettings() {
-		const data: any = await this.loadData();
+		const data = await this.loadData();
 		const legacy = data?.weakStart; // legacy field (string '0'|'1')
 		const migrated = typeof legacy !== 'undefined'
 			? (parseInt(String(legacy)) === 0 ? 0 : 1)
 			: undefined;
 		const language: LanguageSetting = isLanguageSetting(data?.language) ? data.language : DEFAULT_SETTINGS.language;
-		const overrides: Partial<MyPluginSettings> = {};
+		const overrides: Partial<EasyTrackerPluginSettings> = {};
 
 		if (typeof data?.weekStart === 'number') {
 			overrides.weekStart = data.weekStart === 0 ? 0 : 1;
@@ -302,20 +301,20 @@ export default class MyPlugin extends Plugin {
 }
 
 // Plugin settings: weekStart (0 = Sunday, 1 = Monday)
-interface MyPluginSettings {
+interface EasyTrackerPluginSettings {
 	weekStart: 0 | 1;
 	language: LanguageSetting;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
+const DEFAULT_SETTINGS: EasyTrackerPluginSettings = {
 	weekStart: 1,
 	language: 'system',
 };
 
 class EasyTrackerSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: EasyTrackerPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: EasyTrackerPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
