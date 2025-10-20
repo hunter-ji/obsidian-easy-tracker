@@ -1,7 +1,7 @@
 {
 	"id": "easy-tracker",
 	"name": "Easy Tracker",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "0.15.0",
 	"description": "Instantly track goals and habits. Simple, beautiful, and configuration-free.",
 	"author": "Hunter Ji",
