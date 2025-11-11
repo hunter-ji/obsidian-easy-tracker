@@ -183,7 +183,7 @@ export default class EasyTrackerPlugin extends Plugin {
 					const checkInResult = this.insertEntry(valueToInsert);
 
 					if (checkInResult) {
-						wrap.setAttribute('style', 'display: none;');
+						wrap.setCssStyles({ display: 'none' });
 						container.createEl('div', { cls: 'easy-tracker-card-message', text: this.t('card.checkInCongrats') });
 					}
 				});
