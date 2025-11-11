@@ -25,14 +25,8 @@ export const computeDailyOverview = (entries: Entry[]): DailyOverview => {
     const dates = new Set<string>();
     let earliestKey: string | null = null;
 
-    for (const entry of entries ?? []) {
-        let raw: string | Date = '';
-        if (entry?.date !== undefined) raw = entry.date;
-        else if (entry?.day !== undefined) raw = entry.day;
-        else if (entry?.key !== undefined) raw = entry.key;
-        else if (typeof entry === 'string' || entry instanceof Date) raw = entry as string | Date;
-
-        const key = normalizeDateKey(raw);
+    for (const entry of entries) {
+        const key = normalizeDateKey(entry.date);
         if (!key) continue;
 
         dates.add(key);

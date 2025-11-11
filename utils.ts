@@ -1,3 +1,4 @@
+import { Entry } from 'entry-types';
 import { Editor } from 'obsidian';
 
 export function formatDate(d: Date): string {
@@ -12,20 +13,21 @@ export function parseDate(dateStr: string): Date | null {
     return isNaN(date.getTime()) ? null : date;
 }
 
-export function parseEntry(line: string): { date: Date; value: number } | null {
+export function parseEntry(line: string): Entry | null {
     const match = line.match(/^\*\s+(\d{4}-\d{2}-\d{2})\s+-\s+(\d+)/);
     if (!match) return null;
 
     const date = parseDate(match[1]);
     const value = parseInt(match[2], 10);
+
     if (!date || isNaN(value)) return null;
 
     return { date, value };
 }
 
-export function parseEntries(content: string): { date: Date; value: number }[] {
+export function parseEntries(content: string): Entry[] {
     const lines = content.split('\n');
-    const entries: { date: Date; value: number }[] = [];
+    const entries: Entry[] = [];
 
     for (const line of lines) {
         const entry = parseEntry(line);
