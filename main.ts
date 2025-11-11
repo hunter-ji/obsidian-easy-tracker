@@ -249,7 +249,7 @@ export default class EasyTrackerPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'insert-easy-tracker-daily-overview',
+			id: 'insert-daily-overview',
 			name: this.t('command.insertDailyOverview'),
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection(['```easy-tracker-daily-overview', '```', ''].join('\n'));
@@ -257,7 +257,7 @@ export default class EasyTrackerPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'insert-easy-tracker-my-goal',
+			id: 'insert-my-goal',
 			name: this.t('command.insertMyGoal'),
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection(['```easy-tracker-easy-tracker-my-goal', this.t('card.goalPlaceholder'), '```', ''].join('\n'));
