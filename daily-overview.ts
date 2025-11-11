@@ -1,4 +1,5 @@
 import { Translator } from './locales';
+import { Entry } from './entry-types';
 
 // Daily overview interface
 export interface DailyOverview {
@@ -20,14 +21,14 @@ const dateFromKey = (key: string): Date => {
     return new Date(year, (month || 1) - 1, day || 1);
 }
 
-export const computeDailyOverview = (entries: any[]): DailyOverview => {
+export const computeDailyOverview = (entries: Entry[]): DailyOverview => {
     const dates = new Set<string>();
     let earliestKey: string | null = null;
 
-    for (const entry of entries ?? []) {
-        const raw = entry?.date ?? entry?.day ?? entry?.key ?? entry;
-        const key = normalizeDateKey(raw);
+    for (const entry of entries) {
+        const key = normalizeDateKey(entry.date);
         if (!key) continue;
+
         dates.add(key);
         if (!earliestKey || key < earliestKey) {
             earliestKey = key;
@@ -40,7 +41,7 @@ export const computeDailyOverview = (entries: any[]): DailyOverview => {
 
     let streak = 0;
     if (hasEntries) {
-        let cursor = new Date();
+        const cursor = new Date();
         if (!hasToday) {
             cursor.setDate(cursor.getDate() - 1);
         }

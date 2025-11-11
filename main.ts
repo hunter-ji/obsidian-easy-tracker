@@ -10,7 +10,7 @@ export default class EasyTrackerPlugin extends Plugin {
 	private overviewBlocks: HTMLElement[] = [];
 	private locale: LocaleCode = 'en';
 	private translator: Translator = createTranslator('en');
-	private lastCheckInTime: number = 0;
+	private lastCheckInTime = 0;
 
 	public t(key: LocaleKey, vars?: Record<string, string | number>): string {
 		return this.translator(key, vars);
@@ -183,7 +183,7 @@ export default class EasyTrackerPlugin extends Plugin {
 					const checkInResult = this.insertEntry(valueToInsert);
 
 					if (checkInResult) {
-						wrap.setAttribute('style', 'display: none;');
+						wrap.setCssStyles({ display: 'none' });
 						container.createEl('div', { cls: 'easy-tracker-card-message', text: this.t('card.checkInCongrats') });
 					}
 				});
@@ -249,7 +249,7 @@ export default class EasyTrackerPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'insert-easy-tracker-daily-overview',
+			id: 'insert-daily-overview',
 			name: this.t('command.insertDailyOverview'),
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection(['```easy-tracker-daily-overview', '```', ''].join('\n'));
@@ -257,7 +257,7 @@ export default class EasyTrackerPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'insert-easy-tracker-my-goal',
+			id: 'insert-my-goal',
 			name: this.t('command.insertMyGoal'),
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
 				editor.replaceSelection(['```easy-tracker-easy-tracker-my-goal', this.t('card.goalPlaceholder'), '```', ''].join('\n'));
