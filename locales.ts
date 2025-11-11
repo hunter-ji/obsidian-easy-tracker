@@ -1,5 +1,4 @@
-const SUPPORTED_LOCALES = ['en', 'zh-CN'] as const;
-export type LocaleCode = typeof SUPPORTED_LOCALES[number];
+export type LocaleCode = 'en' | 'zh-CN';
 export type LanguageSetting = 'system' | LocaleCode;
 
 const en = {
