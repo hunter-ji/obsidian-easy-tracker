@@ -1,4 +1,4 @@
-import { Entry } from 'entry-types';
+import { Entry } from './entry-types';
 import { Editor } from 'obsidian';
 
 export function formatDate(d: Date): string {
