@@ -10,7 +10,7 @@ export default class EasyTrackerPlugin extends Plugin {
 	private overviewBlocks: HTMLElement[] = [];
 	private locale: LocaleCode = 'en';
 	private translator: Translator = createTranslator('en');
-	private lastCheckInTime: number = 0;
+	private lastCheckInTime = 0;
 
 	public t(key: LocaleKey, vars?: Record<string, string | number>): string {
 		return this.translator(key, vars);

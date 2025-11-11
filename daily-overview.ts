@@ -27,12 +27,14 @@ export const computeDailyOverview = (entries: Entry[]): DailyOverview => {
 
     for (const entry of entries ?? []) {
         let raw: string | Date = '';
-        if (entry?.date !== undefined) raw = entry.date!;
-        else if (entry?.day !== undefined) raw = entry.day!;
-        else if (entry?.key !== undefined) raw = entry.key!;
+        if (entry?.date !== undefined) raw = entry.date;
+        else if (entry?.day !== undefined) raw = entry.day;
+        else if (entry?.key !== undefined) raw = entry.key;
         else if (typeof entry === 'string' || entry instanceof Date) raw = entry as string | Date;
+
         const key = normalizeDateKey(raw);
         if (!key) continue;
+
         dates.add(key);
         if (!earliestKey || key < earliestKey) {
             earliestKey = key;
@@ -45,7 +47,7 @@ export const computeDailyOverview = (entries: Entry[]): DailyOverview => {
 
     let streak = 0;
     if (hasEntries) {
-        let cursor = new Date();
+        const cursor = new Date();
         if (!hasToday) {
             cursor.setDate(cursor.getDate() - 1);
         }
