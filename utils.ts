@@ -1,6 +1,25 @@
 import { Entry } from './entry-types';
 import { Editor } from 'obsidian';
 
+// Extract an ISO date (YYYY-MM-DD) from a filename/basename as fallback
+export function extractDateFromFilename(basename: string): Date | null {
+    const match = basename.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    const d = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return isNaN(d.getTime()) ? null : d;
+}
+
+// Read a date value from a frontmatter object by field name
+export function getDateFromFrontmatter(
+    frontmatter: Record<string, unknown>,
+    dateField: string
+): Date | null {
+    const val = frontmatter[dateField];
+    if (val == null) return null;
+    const d = new Date(val as string);
+    return isNaN(d.getTime()) ? null : d;
+}
+
 export function formatDate(d: Date): string {
 	const y = d.getFullYear();
 	const m = String(d.getMonth() + 1).padStart(2, '0');

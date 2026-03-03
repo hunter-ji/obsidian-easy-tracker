@@ -1,8 +1,9 @@
-import { Editor, MarkdownView, Notice, Plugin, getLanguage } from 'obsidian';
-import { hasTodayEntry, insertTodayEntry } from './utils';
+import { Editor, MarkdownView, Notice, Plugin, TFile, getLanguage } from 'obsidian';
+import { extractDateFromFilename, getDateFromFrontmatter } from './utils';
 import { createTranslator, LocaleCode, LocaleKey, normalizeLocaleCode, Translator } from './locales';
-import { HeatmapRenderChild, ButtonsRenderChild, DailyOverviewRenderChild } from './render-markdown-render-children';
+import { HeatmapRenderChild, ButtonsRenderChild, DailyOverviewRenderChild, GoalChecklistRenderChild, NoteCounterRenderChild } from './render-markdown-render-children';
 import { EasyTrackerPluginSettings, DEFAULT_SETTINGS, EasyTrackerSettingTab } from './setting-tab';
+import { Entry } from './entry-types';
 
 export default class EasyTrackerPlugin extends Plugin {
 	settings: EasyTrackerPluginSettings;
@@ -33,32 +34,77 @@ export default class EasyTrackerPlugin extends Plugin {
 		this.app.workspace.trigger('easy-tracker-setting:refresh');
 	}
 
-	// Get the active Markdown view or notify the user
-	private getActiveMarkdownView(): MarkdownView | null {
-		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-		if (!view) {
-			new Notice(this.t('notice.noActiveMarkdownView'));
-			return null;
+	// Normalize source path to handle different formats
+	public normalizeSourcePath(sourcePath: string): string {
+		let normalized = sourcePath.replace(/^[^/]+:\/\//, '');
+		normalized = normalized.replace(/\\/g, '/');
+		normalized = normalized.replace(/^\/+/, '');
+		return normalized;
+	}
+
+	// Returns true if the given note's frontmatter already has the value field set
+	public isCheckedIn(sourcePath: string): boolean {
+		const normalized = this.normalizeSourcePath(sourcePath);
+		const file = this.app.vault.getFileByPath(normalized);
+		if (!file) {
+			console.warn(`[EasyTracker] File not found: ${sourcePath} (normalized: ${normalized})`);
+			return false;
 		}
-		return view;
+		const cache = this.app.metadataCache.getFileCache(file);
+		return cache?.frontmatter?.[this.settings.valueField] != null;
 	}
 
-	// Read the current note content safely
-	public getActiveContent(): string {
-		const view = this.getActiveMarkdownView();
-		return view ? (view.editor.getValue() || '') : '';
+	// Get the current check-in value for a note
+	public getCheckedInValue(sourcePath: string): number | null {
+		const normalized = this.normalizeSourcePath(sourcePath);
+		const file = this.app.vault.getFileByPath(normalized);
+		if (!file) return null;
+		const cache = this.app.metadataCache.getFileCache(file);
+		const value = cache?.frontmatter?.[this.settings.valueField];
+		return typeof value === 'number' ? value : null;
 	}
 
-	public isTodayCheckedIn(): boolean {
-		const view = this.getActiveMarkdownView();
-		if (!view) return false;
-
-		const content = view.editor.getValue() || '';
-		return hasTodayEntry(content);
+	// Resolve the date a note represents: tries frontmatter dateField, then filename
+	public getNoteDate(sourcePath: string): Date | null {
+		const normalized = this.normalizeSourcePath(sourcePath);
+		const file = this.app.vault.getFileByPath(normalized);
+		if (!file) return null;
+		const cache = this.app.metadataCache.getFileCache(file);
+		if (cache?.frontmatter) {
+			const d = getDateFromFrontmatter(cache.frontmatter, this.settings.dateField);
+			if (d) return d;
+		}
+		return extractDateFromFilename(file.basename);
 	}
 
-	// Safely insert today's entry with a value (prevents duplicates)
-	public insertEntry(value: number): boolean {
+	// Aggregate all check-in entries from the vault's metadata cache
+	public getAllEntries(folderPath?: string): Entry[] {
+		const { dateField, valueField } = this.settings;
+		const entries: Entry[] = [];
+		for (const file of this.app.vault.getMarkdownFiles()) {
+			// Filter by folder if specified
+			if (folderPath && !file.path.startsWith(folderPath)) {
+				continue;
+			}
+
+			const cache = this.app.metadataCache.getFileCache(file);
+			if (!cache?.frontmatter) continue;
+			const rawValue = cache.frontmatter[valueField];
+			if (rawValue == null) continue;
+			const numValue = Number(rawValue);
+			if (!Number.isFinite(numValue)) continue;
+
+			let date = getDateFromFrontmatter(cache.frontmatter, dateField);
+			if (!date) date = extractDateFromFilename(file.basename);
+			if (!date) continue;
+
+			entries.push({ date, value: numValue });
+		}
+		return entries;
+	}
+
+	// Write the check-in value into the note's frontmatter
+	public async insertEntry(value: number, sourcePath: string): Promise<boolean> {
 		const now = Date.now();
 		if (now - this.lastCheckInTime < 1000) {
 			new Notice(this.t('notice.checkInTooFast'));
@@ -66,37 +112,79 @@ export default class EasyTrackerPlugin extends Plugin {
 		}
 		this.lastCheckInTime = now;
 
-		const view = this.getActiveMarkdownView();
-		if (!view) return false;
+		const normalized = this.normalizeSourcePath(sourcePath);
+		const file = this.app.vault.getFileByPath(normalized);
 
-		if (view.getMode() !== 'source') {
-			new Notice(this.t('notice.onlyCheckInInEditMode'));
+		if (!(file instanceof TFile)) {
+			console.error('[EasyTracker] File not found or not TFile:', { sourcePath, normalized });
+			new Notice(this.t('notice.fileNotFound'));
 			return false;
 		}
 
-		const content = view.editor.getValue() || '';
-		if (hasTodayEntry(content)) {
+		// Check if already checked in and edit is not allowed
+		const alreadyCheckedIn = this.isCheckedIn(sourcePath);
+		if (alreadyCheckedIn && !this.settings.allowEdit) {
 			new Notice(this.t('notice.alreadyCheckedIn'));
 			return false;
 		}
 
-		const editor = view.editor;
-		if (!editor) {
-			new Notice(this.t('notice.editorUnavailable'));
+		try {
+			const action = alreadyCheckedIn ? 'Updating' : 'Writing';
+			console.log(`[EasyTracker] ${action} frontmatter:`, { file: file.path, value, field: this.settings.valueField });
+
+			await this.app.fileManager.processFrontMatter(file, (fm) => {
+				fm[this.settings.valueField] = value;
+			});
+
+			// Wait for metadataCache to update (max 3 seconds)
+			const maxWait = 3000;
+			const startTime = Date.now();
+
+			await new Promise<void>((resolve, reject) => {
+				const checkCache = () => {
+					const cache = this.app.metadataCache.getFileCache(file);
+					const currentValue = cache?.frontmatter?.[this.settings.valueField];
+
+					if (currentValue === value) {
+						console.log('[EasyTracker] Cache updated successfully');
+						resolve();
+					} else if (Date.now() - startTime > maxWait) {
+						console.warn('[EasyTracker] Cache update timeout');
+						reject(new Error('Cache update timeout'));
+					} else {
+						setTimeout(checkCache, 50);
+					}
+				};
+				checkCache();
+			});
+
+			// Trigger refresh
+			this.triggerRefresh();
+
+			const successKey = alreadyCheckedIn ? 'notice.checkInUpdated' : 'notice.checkInSuccess';
+			new Notice(this.t(successKey));
+			return true;
+
+		} catch (error) {
+			console.error('[EasyTracker] Failed to insert entry:', error);
+			new Notice(this.t('notice.checkInFailed'));
 			return false;
 		}
-		insertTodayEntry(editor, value);
-
-		// update
-		this.triggerRefresh();
-
-		return true;
 	}
 
 	async onload() {
-		// Load settings (includes migration from legacy weakStart)
 		await this.loadSettings();
 		this.refreshLocale();
+
+		// Trigger refresh whenever a tracked note's metadata is updated
+		this.registerEvent(
+			this.app.metadataCache.on('changed', (file) => {
+				const cache = this.app.metadataCache.getFileCache(file);
+				if (cache?.frontmatter?.[this.settings.valueField] != null) {
+					this.triggerRefresh();
+				}
+			})
+		);
 
 		this.registerMarkdownCodeBlockProcessor('easy-tracker-my-goal', (source, el, _ctx) => {
 			const container = el.createDiv({ cls: "easy-tracker-card" });
@@ -105,24 +193,28 @@ export default class EasyTrackerPlugin extends Plugin {
 			container.createEl('div', { cls: 'easy-tracker-my-goal', text: source.trim() || this.t('card.goalPlaceholder') });
 		});
 
-		// Render a yearly calendar heatmap from entries in the current note
-		this.registerMarkdownCodeBlockProcessor('easy-tracker-year-calendar-heatmap', (source, el, ctx) => {
-			ctx.addChild(new HeatmapRenderChild(this, el, source));
+		// Render an interactive goal checklist
+		this.registerMarkdownCodeBlockProcessor('easy-tracker-goal-checklist', (source, el, ctx) => {
+			ctx.addChild(new GoalChecklistRenderChild(this, el, source, ctx.sourcePath));
 		});
 
-		// Render a group of buttons that insert today's entry with a value
-		// Example:
-		// ```buttons
-		//  Little | 1
-		//  Enough | 2
-		//  More   | 3
-		// ```
+		// Render a yearly calendar heatmap sourced from all notes in the vault
+		this.registerMarkdownCodeBlockProcessor('easy-tracker-year-calendar-heatmap', (source, el, ctx) => {
+			ctx.addChild(new HeatmapRenderChild(this, el, source, ctx.sourcePath));
+		});
+
+		// Render a group of buttons that check in the current note
 		this.registerMarkdownCodeBlockProcessor("easy-tracker-buttons", (source, el, ctx) => {
-			ctx.addChild(new ButtonsRenderChild(this, el, source));
+			ctx.addChild(new ButtonsRenderChild(this, el, source, ctx.sourcePath));
 		});
 
 		this.registerMarkdownCodeBlockProcessor("easy-tracker-daily-overview", (_source, el, ctx) => {
-			ctx.addChild(new DailyOverviewRenderChild(this, el));
+			ctx.addChild(new DailyOverviewRenderChild(this, el, ctx.sourcePath));
+		});
+
+		// Render a note counter showing today's new notes
+		this.registerMarkdownCodeBlockProcessor("easy-tracker-note-counter", (_source, el, ctx) => {
+			ctx.addChild(new NoteCounterRenderChild(this, el, ctx.sourcePath));
 		});
 
 		// Insert a bare heatmap block
@@ -152,7 +244,9 @@ export default class EasyTrackerPlugin extends Plugin {
 					`  ${this.t('snippet.gotItDone')} | 2`,
 					`  ${this.t('snippet.didExtra')} | 3`,
 					'```',
-					'```easy-tracker-my-goal', this.t('card.goalPlaceholder'), '```',
+					'```easy-tracker-goal-checklist',
+					this.t('card.goalChecklistPlaceholder'),
+					'```',
 					''
 				].join('\n'));
 			},
@@ -170,7 +264,9 @@ export default class EasyTrackerPlugin extends Plugin {
 					'```easy-tracker-buttons',
 					`  ${this.t('snippet.checkIn')} | 1`,
 					'```',
-					'```easy-tracker-my-goal', this.t('card.goalPlaceholder'), '```',
+					'```easy-tracker-goal-checklist',
+					this.t('card.goalChecklistPlaceholder'),
+					'```',
 					''
 				].join('\n'));
 			},
@@ -186,13 +282,29 @@ export default class EasyTrackerPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'insert-my-goal',
-			name: this.t('command.insertMyGoal'),
+			name: this.t('command.insertGoalChecklist'),
 			editorCallback: (editor: Editor, _view: MarkdownView) => {
-				editor.replaceSelection(['```easy-tracker-easy-tracker-my-goal', this.t('card.goalPlaceholder'), '```', ''].join('\n'));
+				editor.replaceSelection([
+					'```easy-tracker-goal-checklist',
+					this.t('card.goalChecklistPlaceholder'),
+					'```',
+					''
+				].join('\n'));
 			},
 		});
 
-		// Settings tab
+		this.addCommand({
+			id: 'insert-note-counter',
+			name: this.t('command.insertNoteCounter'),
+			editorCallback: (editor: Editor, _view: MarkdownView) => {
+				editor.replaceSelection([
+					'```easy-tracker-note-counter',
+					'```',
+					''
+				].join('\n'));
+			},
+		});
+
 		this.addSettingTab(new EasyTrackerSettingTab(this.app, this));
 	}
 
@@ -213,6 +325,14 @@ export default class EasyTrackerPlugin extends Plugin {
 
 		if (typeof migrated !== 'undefined') {
 			overrides.weekStart = migrated;
+		}
+
+		if (typeof data?.dateField === 'string' && data.dateField.trim()) {
+			overrides.dateField = data.dateField.trim();
+		}
+
+		if (typeof data?.valueField === 'string' && data.valueField.trim()) {
+			overrides.valueField = data.valueField.trim();
 		}
 
 		this.settings = {

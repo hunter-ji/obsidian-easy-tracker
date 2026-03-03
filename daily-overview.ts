@@ -21,7 +21,8 @@ const dateFromKey = (key: string): Date => {
     return new Date(year, (month || 1) - 1, day || 1);
 }
 
-export const computeDailyOverview = (entries: Entry[]): DailyOverview => {
+// Compute overview relative to referenceDate (the date the note represents).
+export const computeDailyOverview = (entries: Entry[], referenceDate: Date): DailyOverview => {
     const dates = new Set<string>();
     let earliestKey: string | null = null;
 
@@ -35,13 +36,13 @@ export const computeDailyOverview = (entries: Entry[]): DailyOverview => {
         }
     }
 
-    const todayKey = normalizeDateKey(new Date());
+    const refKey = normalizeDateKey(referenceDate);
     const hasEntries = dates.size > 0;
-    const hasToday = dates.has(todayKey);
+    const hasToday = dates.has(refKey);
 
     let streak = 0;
     if (hasEntries) {
-        const cursor = new Date();
+        const cursor = new Date(referenceDate);
         if (!hasToday) {
             cursor.setDate(cursor.getDate() - 1);
         }
@@ -54,7 +55,7 @@ export const computeDailyOverview = (entries: Entry[]): DailyOverview => {
     let lastMissing: string | null = null;
     if (hasEntries && earliestKey) {
         const earliestDate = dateFromKey(earliestKey);
-        const cursor = new Date();
+        const cursor = new Date(referenceDate);
         while (cursor >= earliestDate) {
             const key = normalizeDateKey(cursor);
             if (!dates.has(key)) {
@@ -104,18 +105,4 @@ export const buildDailyOverview = (container: HTMLElement, overview: DailyOvervi
 			card.createEl('div', { cls: 'easy-tracker-daily-overview__hint', text: metric.hint });
 		}
 	}
-};
-
-export const renderDailyOverview = (el: HTMLElement, overview: DailyOverview, t: Translator): void => {
-    const container = el.createDiv();
-    buildDailyOverview(container, overview, t);
-};
-
-export const updateDailyOverview = (el: HTMLElement, overview: DailyOverview, t: Translator): void => {
-    const container = el.querySelector('#easy-tracker-daily-overview');
-    if (container instanceof HTMLElement) {
-        buildDailyOverview(container, overview, t);
-    } else {
-        renderDailyOverview(el, overview, t);
-    }
 };
