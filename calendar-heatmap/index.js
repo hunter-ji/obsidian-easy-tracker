@@ -40,55 +40,55 @@
             locale: 'en-US',
             legend: { less: 'Less', more: 'More' },
             weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-            tooltip: (value, date) => `${value} on ${date}`
+            tooltip: (value, date, count) => `${value} on ${date}${count > 0 ? ` (${count} entries)` : ''}`
         },
         'zh-cn': {
             locale: 'zh-CN',
             legend: { less: '较少', more: '较多' },
             weekdays: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
-            tooltip: (value, date) => `${date}：${value}`
+            tooltip: (value, date, count) => `${date}：${value}${count > 0 ? `（${count}次）` : ''}`
         },
         'zh-tw': {
             locale: 'zh-TW',
             legend: { less: '較少', more: '較多' },
             weekdays: ['週日', '週一', '週二', '週三', '週四', '週五', '週六'],
-            tooltip: (value, date) => `${date}：${value}`
+            tooltip: (value, date, count) => `${date}：${value}${count > 0 ? `（${count}次）` : ''}`
         },
         ja: {
             locale: 'ja-JP',
             legend: { less: '少ない', more: '多い' },
             weekdays: ['日', '月', '火', '水', '木', '金', '土'],
-            tooltip: (value, date) => `${date}：${value}`
+            tooltip: (value, date, count) => `${date}：${value}${count > 0 ? `（${count}回）` : ''}`
         },
         fr: {
             locale: 'fr-FR',
             legend: { less: 'Moins', more: 'Plus' },
             weekdays: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
-            tooltip: (value, date) => `${value} le ${date}`
+            tooltip: (value, date, count) => `${value} le ${date}${count > 0 ? ` (${count})` : ''}`
         },
         de: {
             locale: 'de-DE',
             legend: { less: 'Weniger', more: 'Mehr' },
             weekdays: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
-            tooltip: (value, date) => `${value} am ${date}`
+            tooltip: (value, date, count) => `${value} am ${date}${count > 0 ? ` (${count})` : ''}`
         },
         ko: {
             locale: 'ko-KR',
             legend: { less: '적음', more: '많음' },
             weekdays: ['일', '월', '화', '수', '목', '금', '토'],
-            tooltip: (value, date) => `${date} ${value}`
+            tooltip: (value, date, count) => `${date} ${value}${count > 0 ? ` (${count}회)` : ''}`
         },
         es: {
             locale: 'es-ES',
             legend: { less: 'Menos', more: 'Más' },
             weekdays: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
-            tooltip: (value, date) => `${value} el ${date}`
+            tooltip: (value, date, count) => `${value} el ${date}${count > 0 ? ` (${count})` : ''}`
         },
         it: {
             locale: 'it-IT',
             legend: { less: 'Meno', more: 'Più' },
             weekdays: ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'],
-            tooltip: (value, date) => `${value} il ${date}`
+            tooltip: (value, date, count) => `${value} il ${date}${count > 0 ? ` (${count})` : ''}`
         }
     };
 
@@ -168,7 +168,11 @@
             const key = dateKey(date);
             const value = typeof item.value === 'number' ? item.value : Number(item.count);
             if (Number.isNaN(value)) return;
-            map.set(key, value);
+            const count = typeof item.count === 'number' ? item.count : 1;
+            const current = map.get(key) || { value: 0, count: 0 };
+            current.value += value;
+            current.count += Number.isNaN(count) ? 0 : count;
+            map.set(key, current);
         });
         return map;
     }
@@ -385,7 +389,9 @@
                 dateFormatter = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric' });
             }
             const values = Array.from(this.data.values());
-            const maxValue = this.options.maxValue != null ? this.options.maxValue : values.reduce((acc, value) => Math.max(acc, value), 0);
+            const maxValue = this.options.maxValue != null
+                ? this.options.maxValue
+                : values.reduce((acc, datum) => Math.max(acc, Number(datum?.value) || 0), 0);
 
             const root = document.createElement('div');
             root.className = 'easy-tracker-heatmap-root';
@@ -435,7 +441,9 @@
                     currentWeekNumber = weekNumber;
                 }
 
-                const value = this.data.get(key) || 0;
+                const datum = this.data.get(key) || { value: 0, count: 0 };
+                const value = Number(datum.value) || 0;
+                const count = Number(datum.count) || 0;
                 const { color, level } = computeColor(value, maxValue, this.options.colorScale);
                 const weekdayIndex = (dayDate.getDay() - weekStart + 7) % 7;
 
@@ -443,6 +451,7 @@
                 dayNode.className = 'easy-tracker-heatmap-day';
                 dayNode.dataset.level = String(level);
                 dayNode.dataset.value = String(value);
+                dayNode.dataset.count = String(count);
                 dayNode.dataset.date = key;
                 dayNode.dataset.rangeStart = dateKey(start);
                 dayNode.dataset.rangeEnd = dateKey(end);
@@ -480,9 +489,12 @@
             if (this.options.tooltip) {
                 const tooltipFormatter = (dataset) => {
                     const value = Number(dataset.value) || 0;
+                    const count = Number(dataset.count) || 0;
                     const parsed = new Date(dataset.date);
                     const dateLabel = Number.isNaN(parsed.getTime()) ? dataset.date : dateFormatter.format(parsed);
-                    return languageConfig.tooltip ? languageConfig.tooltip(value, dateLabel) : LANGUAGE_CONFIG.en.tooltip(value, dateLabel);
+                    return languageConfig.tooltip
+                        ? languageConfig.tooltip(value, dateLabel, count)
+                        : LANGUAGE_CONFIG.en.tooltip(value, dateLabel, count);
                 };
                 this.tooltipDisposer = attachTooltip(root, tooltipFormatter);
             }

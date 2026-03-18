@@ -1,8 +1,9 @@
 import { MarkdownRenderChild, ButtonComponent } from "obsidian";
 import type EasyTrackerPlugin from "./main";
 import CalendarHeatmap, { CalendarHeatmapOptions } from './calendar-heatmap/index.js';
-import { parseEntries } from './utils';
+import { parseEntries, formatDate } from './utils';
 import { computeDailyOverview, buildDailyOverview } from './daily-overview';
+import { CustomValueModal } from "./custom-value-modal";
 
 export class HeatmapRenderChild extends MarkdownRenderChild {
     plugin: EasyTrackerPlugin;
@@ -36,28 +37,54 @@ export class HeatmapRenderChild extends MarkdownRenderChild {
 
     display() {
         this.container.empty();
-        const data = parseEntries(this.plugin.getActiveContent());
-        const options = this.parseHeatmapOptions(this.source);
-        
+        const rawData = parseEntries(this.plugin.getActiveContent());
+        const aggregated = this.aggregateData(rawData);
+        const sourceOptions = this.parseHeatmapOptions(this.source);
+
         const cardTitle = this.container.createDiv({ cls: 'easy-tracker-card' });
         cardTitle.createEl('div', { cls: 'easy-tracker-card-title', text: this.plugin.t('card.activityHistoryTitle') });
         const heatmapElement = cardTitle.createDiv({ cls: 'easy-tracker-year-calendar-heatmap' });
 
         this.onunload()
-        this.heatmap = new CalendarHeatmap(heatmapElement, data, {
+        this.heatmap = new CalendarHeatmap(heatmapElement, aggregated, {
             weekStart: this.plugin.settings.weekStart,
             view: "year",
             year: new Date().getFullYear(),
             legend: false,
             language: this.plugin.locale,
-            ...options,
+            maxValue: (sourceOptions as any).target || null,
+            ...sourceOptions,
+            tooltip: true,
         });
+
+        // Set custom tooltip if available in the library
+        this.heatmap.setOptions({
+            tooltip: true,
+        });
+    }
+
+    private aggregateData(entries: any[]): any[] {
+        const map = new Map<string, { value: number; count: number }>();
+        for (const entry of entries) {
+            const day = formatDate(entry.date, false);
+            const current = map.get(day) || { value: 0, count: 0 };
+            current.value += entry.value;
+            current.count += 1;
+            map.set(day, current);
+        }
+
+        return Array.from(map.entries()).map(([date, data]) => ({
+            date,
+            value: data.value,
+            count: data.count
+        }));
     }
 
     update() {
         if (this.heatmap) {
-            const data = parseEntries(this.plugin.getActiveContent());
-            this.heatmap.replaceData(data);
+            const rawData = parseEntries(this.plugin.getActiveContent());
+            const aggregated = this.aggregateData(rawData);
+            this.heatmap.replaceData(aggregated);
         } else {
             this.display();
         }
@@ -119,9 +146,16 @@ export class ButtonsRenderChild extends MarkdownRenderChild {
         container.setAttr('id', 'easy-tracker-buttons');
         container.createEl('div', { cls: 'easy-tracker-card-title', text: this.plugin.t('card.buttonsTitle') });
 
-        if (this.plugin.isTodayCheckedIn()) {
-            container.createEl('div', { cls: 'easy-tracker-card-message', text: this.plugin.t('card.checkInCongrats') });
-            return;
+        const entries = parseEntries(this.plugin.getActiveContent());
+        const todayStr = formatDate(new Date(), false);
+        const todayEntries = entries.filter(e => formatDate(e.date, false) === todayStr);
+        const todayTotal = todayEntries.reduce((sum, e) => sum + e.value, 0);
+
+        if (todayEntries.length > 0) {
+            container.createEl('div', {
+                cls: 'easy-tracker-card-message',
+                text: this.plugin.t('card.todayTotal', { total: todayTotal })
+            });
         }
 
         const wrap = container.createDiv({ cls: "easy-tracker-button-group" });
@@ -133,9 +167,15 @@ export class ButtonsRenderChild extends MarkdownRenderChild {
             btn.buttonEl.addClass("btn");
             btn.setButtonText(text || this.plugin.t('card.defaultButton'));
             btn.onClick(() => {
-                const n = Number(val);
-                const valueToInsert = Number.isFinite(n) ? n : index + 1; 
-                this.plugin.insertEntry(valueToInsert);
+                if (val === '?') {
+                    new CustomValueModal(this.plugin.app, this.plugin, (customVal) => {
+                        this.plugin.insertEntry(customVal);
+                    }).open();
+                } else {
+                    const n = Number(val);
+                    const valueToInsert = Number.isFinite(n) ? n : index + 1;
+                    this.plugin.insertEntry(valueToInsert);
+                }
             });
         }
     }

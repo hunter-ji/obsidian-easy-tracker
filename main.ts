@@ -57,7 +57,7 @@ export default class EasyTrackerPlugin extends Plugin {
 		return hasTodayEntry(content);
 	}
 
-	// Safely insert today's entry with a value (prevents duplicates)
+	// Safely insert today's entry with a value
 	public insertEntry(value: number): boolean {
 		const now = Date.now();
 		if (now - this.lastCheckInTime < 1000) {
@@ -71,12 +71,6 @@ export default class EasyTrackerPlugin extends Plugin {
 
 		if (view.getMode() !== 'source') {
 			new Notice(this.t('notice.onlyCheckInInEditMode'));
-			return false;
-		}
-
-		const content = view.editor.getValue() || '';
-		if (hasTodayEntry(content)) {
-			new Notice(this.t('notice.alreadyCheckedIn'));
 			return false;
 		}
 

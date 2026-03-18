@@ -27,16 +27,16 @@ Track progress toward a single goal directly inside one file—just insert the r
 ## Modules
 
 - **Daily overview**: Shows today's status, streak, and last missed day.
-- **Year calendar heatmap**: Visualizes your annual progress.
-- **Check-in buttons**: One-click logging; labels and values are editable.
+- **Year calendar heatmap**: Visualizes your annual progress with daily aggregated values (multiple entries on the same day are merged).
+- **Check-in buttons**: One-click logging; labels and values are editable, and today's card shows your accumulated total for the day after check-ins.
 - **Goal card**: Displays your motivational message.
 
 All data is stored as plain text in your note—easy to search, sync, or edit.
 
 ## Customization
 
-- Edit button labels/values by changing the text inside the block.
-- Move or remove modules as you wish.
-- Adjust week start in **Settings → Easy Tracker**.
+- Edit the button block content to customize labels and values. Use `Your Label | ?` syntax to prompt for a custom value when clicked.
+- Modules can be moved, added, or removed as needed.
+- Toggle between Monday and Sunday as the start of the week in **Settings → Easy Tracker**.
 
 No complex setup—just insert, click, and track.

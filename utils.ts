@@ -1,11 +1,17 @@
 import { Entry } from './entry-types';
 import { Editor } from 'obsidian';
 
-export function formatDate(d: Date): string {
-	const y = d.getFullYear();
-	const m = String(d.getMonth() + 1).padStart(2, '0');
-	const day = String(d.getDate()).padStart(2, '0');
-	return `${y}-${m}-${day}`;
+export function formatDate(d: Date, includeTime = false): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const datePart = `${y}-${m}-${day}`;
+    if (!includeTime) return datePart;
+
+    const h = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    const s = String(d.getSeconds()).padStart(2, '0');
+    return `${datePart} ${h}:${min}:${s}`;
 }
 
 export function parseDate(dateStr: string): Date | null {
@@ -14,11 +20,12 @@ export function parseDate(dateStr: string): Date | null {
 }
 
 export function parseEntry(line: string): Entry | null {
-    const match = line.match(/^\*\s+(\d{4}-\d{2}-\d{2})\s+-\s+(\d+)/);
+    // Matches both "YYYY-MM-DD" and "YYYY-MM-DD HH:mm:ss"
+    const match = line.match(/^\*\s+(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2}:\d{2})?)\s+-\s+([\d.]+)/);
     if (!match) return null;
 
     const date = parseDate(match[1]);
-    const value = parseInt(match[2], 10);
+    const value = parseFloat(match[2]);
 
     if (!date || isNaN(value)) return null;
 
@@ -40,8 +47,9 @@ export function parseEntries(content: string): Entry[] {
 }
 
 export function hasTodayEntry(content: string): boolean {
-    const todayStr = formatDate(new Date());
-    const regex = new RegExp(`^\\*\\s+${todayStr}\\s+-`, 'm');
+    const todayStr = formatDate(new Date(), false);
+    // matches the start of the date part
+    const regex = new RegExp(`^\\*\\s+${todayStr}`, 'm');
     return regex.test(content);
 }
 
@@ -53,5 +61,5 @@ export function insertTodayEntry(editor: Editor, num: number): void {
 }
 
 function todayEntry(num: number): string {
-    return `* ${formatDate(new Date())} - ${num}`;
+    return `* ${formatDate(new Date(), true)} - ${num}`;
 }
